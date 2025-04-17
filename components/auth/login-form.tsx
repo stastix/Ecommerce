@@ -68,19 +68,12 @@ export default function LoginForm({ onError }: LoginFormProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <button
-              type="button"
-              onClick={() =>
-                document.dispatchEvent(
-                  new CustomEvent("auth:mode-change", {
-                    detail: "forgot-password",
-                  })
-                )
-              }
+            <a
+              href="/login?mode=forgot-password"
               className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             >
               Forgot password?
-            </button>
+            </a>
           </div>
           <div className="relative">
             <Input

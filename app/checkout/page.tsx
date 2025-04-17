@@ -6,16 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { registerPayment } from "@/app/actions/registerPayment";
 import { useRouter } from "next/navigation";
+import React from "react";
 
-export default function CheckoutPage() {
+const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleCheckout = async () => {
     setLoading(true);
     setError(null);
-    const router = useRouter();
-
     try {
       const { formUrl } = await registerPayment(10, "ORDER12345");
       router.push(formUrl);
@@ -53,4 +53,5 @@ export default function CheckoutPage() {
       </Card>
     </div>
   );
-}
+};
+export default CheckoutPage;

@@ -1,6 +1,6 @@
 "use client";
+import { Product } from "@/lib/db/schema";
 import { createContext, useContext, useState, ReactNode, useMemo } from "react";
-import { Product } from "@/data/products";
 
 type CartContextType = {
   cart: Product[];
@@ -48,8 +48,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const totalAmount = useMemo(() => {
     return cart.reduce(
-      (total, item) =>
-        total + parseFloat(item.price.replace("$", "")) * item.quantity,
+      (total, item) => total + parseFloat(item.price) * item.quantity,
       0
     );
   }, [cart]);

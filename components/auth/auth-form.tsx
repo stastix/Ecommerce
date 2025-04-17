@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import LoginForm from "./login-form";
 import SignUpForm from "./signup-form";
 import ForgotPasswordForm from "./forgot-password-form";
@@ -9,12 +10,30 @@ import AuthFormToggle from "./auth-form-toggle";
 type AuthMode = "login" | "signup" | "forgot-password";
 
 export default function AuthForm() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState<string | null>(null);
 
+  // Update mode based on URL parameters
+  useEffect(() => {
+    const urlMode = searchParams.get("mode");
+    if (urlMode === "signup" || urlMode === "forgot-password") {
+      setMode(urlMode);
+    } else {
+      setMode("login");
+    }
+  }, [searchParams]);
+
   const handleModeChange = (newMode: AuthMode) => {
-    setMode(newMode);
     setError(null);
+
+    // Update URL to reflect the current mode
+    if (newMode === "login") {
+      router.push("/login");
+    } else {
+      router.push(`/login?mode=${newMode}`);
+    }
   };
 
   return (

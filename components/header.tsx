@@ -17,7 +17,7 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import {
   DropdownMenu,
@@ -28,22 +28,51 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { navItems } from "@/data/items";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import SearchBar from "@/components/search-bar";
 
 export default function Header() {
   const { setTheme, theme } = useTheme();
-  const { toggleCart, cart } = useCart();
+  const { cart, toggleCart } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const supabase = createClientComponentClient();
+
   useEffect(() => {
-    setMounted(true); // Ensures this effect runs only after mount
+    setIsClient(true);
   }, []);
 
   const cartItemsCount = Array.isArray(cart) ? cart.length : 0;
 
+  // Check if user is logged in
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+
+      // Set up auth state listener
+      const {
+        data: { subscription },
+      } = await supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user || null);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    };
+
+    getUser();
+  }, [supabase.auth]);
+
+  // Track scroll position for header styling
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -51,6 +80,35 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
+
+  // Navigation items - Home and Products point to the same page
+  const navItems = [
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Contact", path: "/contact" },
+  ];
+
+  // Check if a path is active (special case for Home and Products)
+  const isActive = (path: string) => {
+    return pathname === path;
+  };
+
+  // Handle auth navigation with URL parameters
+  const navigateToAuth = (mode: string | null) => {
+    if (mode === "login" || mode === null) {
+      router.push("/login");
+    } else {
+      router.push(`/login?mode=${mode}`);
+    }
+    if (mobileMenuOpen) setMobileMenuOpen(false);
+  };
 
   return (
     <header
@@ -78,13 +136,19 @@ export default function Header() {
             </Link>
           </div>
 
+          {/* Search Bar - Add this section */}
+          <div className="hidden md:flex mx-4 flex-1 max-w-md">
+            <SearchBar />
+          </div>
+
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.path}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  pathname === item.path
+                  isActive(item.path)
                     ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                 }`}
@@ -92,26 +156,17 @@ export default function Header() {
                 {item.name}
               </Link>
             ))}
-
-            <DropdownMenu>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem>Blog</DropdownMenuItem>
-                <DropdownMenuItem>FAQ</DropdownMenuItem>
-                <DropdownMenuItem>Shipping</DropdownMenuItem>
-                <DropdownMenuItem>Returns</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-full"
-              aria-label="Toggle theme"
-            >
-              {mounted ? (
+            {isClient && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="rounded-full"
+                aria-label="Toggle theme"
+              >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={theme}
@@ -127,16 +182,15 @@ export default function Header() {
                     )}
                   </motion.div>
                 </AnimatePresence>
-              ) : null}
-            </Button>
+              </Button>
+            )}
 
-            {/* Cart Button */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleCart}
+              onClick={() => toggleCart()}
               className="rounded-full relative"
-              aria-label="Open cart"
+              aria-label="View cart"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartItemsCount > 0 && (
@@ -149,47 +203,81 @@ export default function Header() {
               )}
             </Button>
 
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="rounded-full p-0"
-                  aria-label="User menu"
-                >
-                  <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@user"
-                    />
-                    <AvatarFallback className="bg-[#c2152a] text-white">
-                      MP
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  <span>Orders</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {isClient && (
+              <>
+                {user ? (
+                  // Logged in state
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="rounded-full p-0"
+                        aria-label="User menu"
+                      >
+                        <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
+                          <AvatarImage
+                            src={
+                              user.user_metadata?.avatar_url ||
+                              "https://github.com/shadcn.png"
+                            }
+                            alt="@user"
+                          />
+                          <AvatarFallback className="bg-[#c2152a] text-white">
+                            {user.user_metadata?.full_name?.[0] ||
+                              user.email?.[0] ||
+                              "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>
+                        {user.user_metadata?.full_name || user.email}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push("/profile")}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push("/orders")}>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        <span>Orders</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => router.push("/settings")}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  // Logged out state
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="hidden sm:inline-flex"
+                      onClick={() => navigateToAuth("login")}
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      className="bg-[#c2152a] hover:bg-[#a01020] text-white"
+                      size="sm"
+                      onClick={() => navigateToAuth("signup")}
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -209,6 +297,7 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Mobile Navigation Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -218,13 +307,18 @@ export default function Header() {
             transition={{ duration: 0.3 }}
             className="md:hidden border-t border-gray-200 dark:border-gray-800"
           >
+            {/* Add this search bar for mobile */}
+            <div className="p-4">
+              <SearchBar />
+            </div>
+
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white dark:bg-black">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.path}
                   className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    pathname === item.path
+                    isActive(item.path)
                       ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                   }`}
@@ -233,6 +327,27 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
+
+              {/* Login/Signup buttons for mobile when logged out */}
+              {isClient && !user && (
+                <div className="pt-2 pb-1">
+                  <div className="border-t border-gray-200 dark:border-gray-800 pt-2 flex flex-col gap-2">
+                    <button
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                      onClick={() => navigateToAuth("login")}
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      className="block px-3 py-2 rounded-md text-base font-medium bg-[#c2152a] text-white hover:bg-[#a01020] mx-3"
+                      onClick={() => navigateToAuth("signup")}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="pt-2 pb-1">
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-2">
                   <p className="px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

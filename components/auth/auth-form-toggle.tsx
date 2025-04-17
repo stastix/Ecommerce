@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 
 interface AuthFormToggleProps {
@@ -12,32 +11,12 @@ export default function AuthFormToggle({
   mode,
   onChange,
 }: AuthFormToggleProps) {
-  useEffect(() => {
-    const handleModeChange = (e: Event) => {
-      const customEvent = e as CustomEvent<
-        "login" | "signup" | "forgot-password"
-      >;
-      onChange(customEvent.detail);
-    };
-
-    document.addEventListener(
-      "auth:mode-change",
-      handleModeChange as EventListener
-    );
-    return () => {
-      document.removeEventListener(
-        "auth:mode-change",
-        handleModeChange as EventListener
-      );
-    };
-  }, [onChange]);
-
   return (
     <>
       <div className="text-center text-sm">
         {mode === "login" ? (
           <>
-            Dont have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={() => onChange("signup")}

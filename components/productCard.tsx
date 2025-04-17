@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Product } from "@/data/products";
 import { useCart } from "@/app/context/CartContext";
+import { Product } from "@/lib/db/schema";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
@@ -18,8 +18,8 @@ const ProductCard = ({ product }: { product: Product }) => {
 
   const handleAddToCart = useCallback(
     (e: React.MouseEvent, product: Product) => {
-      e.preventDefault(); // Prevent navigation when clicking the button
-      e.stopPropagation(); // Prevent event bubbling
+      e.preventDefault();
+      e.stopPropagation();
 
       addToCart(product);
       setAddedProducts((prev) => ({
