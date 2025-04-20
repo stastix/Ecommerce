@@ -39,7 +39,6 @@ export default function LoginForm({ onError }: LoginFormProps) {
         return;
       }
 
-      // Refresh the page to update the session
       router.refresh();
       router.push("/dashboard");
     } catch (err) {

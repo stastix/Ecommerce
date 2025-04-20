@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -21,10 +20,9 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setIsSubmitted(true);
-    } catch (err) {
+    } catch {
       setError("Failed to send reset email. Please try again.");
     } finally {
       setIsLoading(false);
@@ -52,7 +50,7 @@ export default function ForgotPasswordPage() {
         {isSubmitted ? (
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-4 rounded-md text-sm">
-              We've sent a password reset link to <strong>{email}</strong>.
+              We&apos;ve sent a password reset link to <strong>{email}</strong>.
               Please check your inbox and follow the instructions to reset your
               password.
             </div>

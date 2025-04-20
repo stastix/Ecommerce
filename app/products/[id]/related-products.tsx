@@ -1,65 +1,102 @@
 "use client";
 
-import ProductCard from "@/components/productCard";
-import { Separator } from "@/components/ui/separator";
-import { Product } from "@/lib/db/schema";
+import type { Product } from "@/lib/db/schema";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+type Props = {
+  currentProductId: number;
+  categoryName: string;
+};
+
+async function fetchRelatedProducts(
+  category: string,
+  excludeId: number
+): Promise<Product[]> {
+  const res = await fetch(`/api/getRelatedProducts/${category}/${excludeId}`);
+  if (!res.ok) throw new Error("Failed to fetch related products");
+
+  const data: Product[] = await res.json();
+
+  const unique = Array.from(new Map(data.map((p) => [p.id, p])).values());
+  return unique.filter((p) => p.id !== excludeId).slice(0, 4);
+}
 
 export default function RelatedProducts({
   currentProductId,
   categoryName,
-}: {
-  currentProductId: number;
-  categoryName: string;
-}) {
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+}: Props) {
+  const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
-  useEffect(() => {
-    async function fetchRelated() {
-      try {
-        const res = await fetch(`/api/category/${categoryName}`);
-        const data: Product[] = await res.json();
+  const { data: relatedProducts = [], isLoading } = useQuery({
+    queryKey: ["relatedProducts", categoryName, currentProductId],
+    queryFn: () => fetchRelatedProducts(categoryName, currentProductId),
+    staleTime: 1000 * 60 * 10,
+  });
 
-        const filtered = data
-          .filter((product) => product.id !== currentProductId)
-          .slice(0, 4);
+  if (isLoading) {
+    return (
+      <div className="mt-10 space-y-4">
+        <h2 className="text-xl font-semibold">Related Products</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-        setRelatedProducts(filtered);
-      } catch (error) {
-        console.error("Failed to fetch related products:", error);
-      }
-    }
-
-    fetchRelated();
-  }, [categoryName, currentProductId]);
-
-  if (relatedProducts.length === 0) return null;
+  if (!relatedProducts.length) return null;
 
   return (
-    <motion.div
-      initial={{ y: 40, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 1, duration: 0.5 }}
-      className="mt-16"
-    >
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        You might also like
-      </h2>
-      <Separator className="mb-6" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="mt-10 space-y-4">
+      <h2 className="text-xl font-semibold">Related Products</h2>
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+      >
         {relatedProducts.map((product, index) => (
-          <motion.div
+          <Link
+            href={`/products/${product.id}`}
             key={product.id}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1 + index * 0.1 }}
-            whileHover={{ y: -5 }}
+            className="block"
+            passHref
           >
-            <ProductCard product={product} />
-          </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setSelectedImage(index)}
+              className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all duration-200 ${
+                selectedImage === index
+                  ? "border-[#c2152a] shadow-lg ring-2 ring-[#c2152a]/30"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500"
+              }`}
+            >
+              <div className="relative w-full h-full">
+                <Image
+                  src={product.image || "/placeholder.svg"}
+                  alt={product.name || `Related product ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                <p className="text-sm text-white truncate">{product.name}</p>
+              </div>
+            </motion.div>
+          </Link>
         ))}
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

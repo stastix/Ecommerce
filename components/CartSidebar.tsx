@@ -41,7 +41,6 @@ const CartSidebar = () => {
 
   const handlePlusClick = (productId: number) => {
     updateQuantity(productId, 1);
-    console.log(productId);
   };
 
   const handleMinusClick = (productId: number) => {
@@ -49,7 +48,6 @@ const CartSidebar = () => {
   };
 
   const handleCheckoutClick = () => {
-    console.log("Checkout clicked");
     router.push("/checkout");
     toggleCart();
   };
@@ -141,7 +139,7 @@ const CartSidebar = () => {
                 <ul className="divide-y divide-gray-200 dark:divide-gray-700 -mx-4">
                   {cart.map((product) => (
                     <motion.li
-                      key={product.id}
+                      key={`${product.productId}-${product.selectedSize}`}
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
@@ -164,14 +162,16 @@ const CartSidebar = () => {
                             {product.name}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                            {product.price}
+                            {product.price} TND
                           </p>
                           <div className="flex items-center mt-2">
                             <Button
                               variant="outline"
                               size="icon"
                               className="h-7 w-7 rounded-md"
-                              onClick={() => handleMinusClick(product.id)}
+                              onClick={() =>
+                                handleMinusClick(product.productId)
+                              }
                               disabled={product.quantity === 1}
                             >
                               <Minus className="h-3 w-3" />
@@ -183,7 +183,7 @@ const CartSidebar = () => {
                               variant="outline"
                               size="icon"
                               className="h-7 w-7 rounded-md"
-                              onClick={() => handlePlusClick(product.id)}
+                              onClick={() => handlePlusClick(product.productId)}
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -193,7 +193,7 @@ const CartSidebar = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeFromCart(product.id)}
+                          onClick={() => removeFromCart(product.productId)}
                           className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 self-start"
                           aria-label={`Remove ${product.name} from cart`}
                         >
@@ -214,7 +214,7 @@ const CartSidebar = () => {
                   Subtotal
                 </span>
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  ${totalAmount.toFixed(2)}
+                  {totalAmount.toFixed(2)} TND
                 </span>
               </div>
 
@@ -232,7 +232,7 @@ const CartSidebar = () => {
                   Total
                 </span>
                 <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  ${totalAmount.toFixed(2)}
+                  {totalAmount.toFixed(2)} TND
                 </span>
               </div>
 

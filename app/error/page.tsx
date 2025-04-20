@@ -1,5 +1,9 @@
-"use client";
+import { Suspense } from "react";
 
 export default function ErrorPage() {
-  return <p>Sorry, something went wrong</p>;
+  return (
+    <Suspense>
+      <p>Sorry, something went wrong</p>
+    </Suspense>
+  );
 }

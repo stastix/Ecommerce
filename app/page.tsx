@@ -1,10 +1,14 @@
-"use client";
 import { Suspense } from "react";
-import ProductsGrid from "@/components/products-grid";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ProductsGridSkeleton } from "@/components/ui/productsGrid-skeleton";
+import nextDynamic from "next/dynamic";
 import ProductsFilter from "@/components/products-filter";
+const ProductsGrid = nextDynamic(() => import("@/components/products-grid"), {
+  loading: () => <ProductsGridSkeleton />,
+});
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function ProductsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
       <div className="max-w-[1400px] mx-auto">
@@ -19,34 +23,17 @@ export default function HomePage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
-          <ProductsFilter />
+          <Suspense>
+            <ProductsFilter />
+          </Suspense>
+
           <div className="flex-1">
             <Suspense fallback={<ProductsGridSkeleton />}>
-              <ProductsGrid  />
+              <ProductsGrid />
             </Suspense>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ProductsGridSkeleton() {
-  return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {[...Array(8)].map((_, i) => (
-        <div
-          key={i}
-          className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm"
-        >
-          <Skeleton className="w-full h-64" />
-          <div className="p-4">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/4 mb-4" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

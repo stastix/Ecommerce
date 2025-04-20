@@ -5,16 +5,20 @@ export interface Product {
   price: number;
   image: string | null;
   category: string;
-  stock: number;
   createdAt: Date;
   updatedAt: Date;
+  quantity: number;
+  discount: number | null;
+  size: string[] | null;
 }
 
-export interface NewProduct {
+export interface CartProduct {
+  productId: number;
   name: string;
   description?: string | null;
   price: number;
-  imageUrl?: string | null;
+  image?: string | null;
   category: string;
-  stock?: number;
+  selectedSize: string | null;
+  quantity: number;
 }

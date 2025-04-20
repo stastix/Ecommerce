@@ -30,7 +30,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import SearchBar from "@/components/search-bar";
 
 export default function Header() {
   const { setTheme, theme } = useTheme();
@@ -41,6 +40,7 @@ export default function Header() {
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -52,21 +52,26 @@ export default function Header() {
   // Check if user is logged in
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-
-      // Set up auth state listener
-      const {
-        data: { subscription },
-      } = await supabase.auth.onAuthStateChange((_event, session) => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         setUser(session?.user || null);
-      });
 
-      return () => {
-        subscription.unsubscribe();
-      };
+        // Set up auth state listener
+        const {
+          data: { subscription },
+        } = await supabase.auth.onAuthStateChange((_event, session) => {
+          setUser(session?.user || null);
+        });
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      } finally {
+        // Set loading to false regardless of outcome
+        setIsLoading(false);
+      }
     };
 
     getUser();
@@ -136,11 +141,6 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Search Bar - Add this section */}
-          <div className="hidden md:flex mx-4 flex-1 max-w-md">
-            <SearchBar />
-          </div>
-
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
@@ -159,140 +159,161 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {isClient && (
+            {/* Theme Toggle - Fixed width to prevent layout shift */}
+            <div className="w-10 h-10 flex items-center justify-center">
+              {isClient && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="rounded-full"
+                  aria-label="Toggle theme"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={theme}
+                      initial={{ y: -20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 20, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {theme === "dark" ? (
+                        <Sun className="h-5 w-5" />
+                      ) : (
+                        <Moon className="h-5 w-5" />
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </Button>
+              )}
+            </div>
+
+            {/* Cart Button - Fixed width to prevent layout shift */}
+            <div className="w-10 h-10 flex items-center justify-center">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="rounded-full"
-                aria-label="Toggle theme"
+                onClick={() => toggleCart()}
+                className="rounded-full relative"
+                aria-label="View cart"
               >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={theme}
-                    initial={{ y: -20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 20, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
+                <ShoppingCart className="h-5 w-5" />
+                {cartItemsCount > 0 && (
+                  <Badge
+                    className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#c2152a] text-white text-xs"
+                    variant="destructive"
                   >
-                    {theme === "dark" ? (
-                      <Sun className="h-5 w-5" />
-                    ) : (
-                      <Moon className="h-5 w-5" />
-                    )}
-                  </motion.div>
-                </AnimatePresence>
+                    {cartItemsCount}
+                  </Badge>
+                )}
               </Button>
-            )}
+            </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => toggleCart()}
-              className="rounded-full relative"
-              aria-label="View cart"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartItemsCount > 0 && (
-                <Badge
-                  className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#c2152a] text-white text-xs"
-                  variant="destructive"
-                >
-                  {cartItemsCount}
-                </Badge>
-              )}
-            </Button>
-
-            {isClient && (
-              <>
-                {user ? (
-                  // Logged in state
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+            {/* Auth Section - Fixed width container to prevent layout shift */}
+            <div className="h-10 flex items-center">
+              {isClient && !isLoading ? (
+                <>
+                  {user ? (
+                    // Logged in state
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="rounded-full p-0"
+                          aria-label="User menu"
+                        >
+                          <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
+                            <AvatarImage
+                              src={
+                                user.user_metadata?.avatar_url ||
+                                "https://github.com/shadcn.png"
+                              }
+                              alt="@user"
+                            />
+                            <AvatarFallback className="bg-[#c2152a] text-white">
+                              {user.user_metadata?.full_name?.[0] ||
+                                user.email?.[0] ||
+                                "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>
+                          {user.user_metadata?.full_name || user.email}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => router.push("/profile")}
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => router.push("/orders")}
+                        >
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          <span>Orders</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => router.push("/settings")}
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Settings</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Log out</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    // Logged out state
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
-                        className="rounded-full p-0"
-                        aria-label="User menu"
+                        size="sm"
+                        className="hidden sm:inline-flex"
+                        onClick={() => navigateToAuth("login")}
                       >
-                        <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
-                          <AvatarImage
-                            src={
-                              user.user_metadata?.avatar_url ||
-                              "https://github.com/shadcn.png"
-                            }
-                            alt="@user"
-                          />
-                          <AvatarFallback className="bg-[#c2152a] text-white">
-                            {user.user_metadata?.full_name?.[0] ||
-                              user.email?.[0] ||
-                              "U"}
-                          </AvatarFallback>
-                        </Avatar>
+                        Sign In
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel>
-                        {user.user_metadata?.full_name || user.email}
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => router.push("/profile")}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push("/orders")}>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        <span>Orders</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => router.push("/settings")}
+                      <Button
+                        className="bg-[#c2152a] hover:bg-[#a01020] text-white"
+                        size="sm"
+                        onClick={() => navigateToAuth("signup")}
                       >
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  // Logged out state
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="hidden sm:inline-flex"
-                      onClick={() => navigateToAuth("login")}
-                    >
-                      Sign In
-                    </Button>
-                    <Button
-                      className="bg-[#c2152a] hover:bg-[#a01020] text-white"
-                      size="sm"
-                      onClick={() => navigateToAuth("signup")}
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden rounded-full"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
+                        Sign Up
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
-                <Menu className="h-5 w-5" />
+                // Loading state placeholder with same dimensions
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:block w-16 h-8"></div>
+                  <div className="w-20 h-8"></div>
+                </div>
               )}
-            </Button>
+            </div>
+
+            {/* Mobile Menu Button - Fixed width to prevent layout shift */}
+            <div className="w-10 h-10 md:hidden flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -307,11 +328,6 @@ export default function Header() {
             transition={{ duration: 0.3 }}
             className="md:hidden border-t border-gray-200 dark:border-gray-800"
           >
-            {/* Add this search bar for mobile */}
-            <div className="p-4">
-              <SearchBar />
-            </div>
-
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white dark:bg-black">
               {navItems.map((item) => (
                 <Link

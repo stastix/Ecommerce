@@ -4,14 +4,11 @@ import type React from "react";
 
 import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft,
   ShoppingCart,
   Heart,
   Share2,
-  Star,
   Truck,
   RotateCcw,
   Shield,
@@ -20,42 +17,51 @@ import {
   Minus,
   Plus,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/app/context/CartContext";
-import { Product } from "@/lib/db/schema";
+import type { Product } from "@/lib/db/schema";
+import Link from "next/link";
+import RelatedProducts from "./related-products";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface ProductDetailProps {
   product: Product;
 }
 
 export default function ProductDetail({ product }: ProductDetailProps) {
-  const router = useRouter();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(0);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showSizeError, setShowSizeError] = useState(false);
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "TND",
   }).format(product.price);
 
-  // Calculate discounted price (20% off)
   const originalPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "TND",
   }).format(product.price * 1.2);
 
   const handleAddToCart = () => {
+    if (needsSize && !selectedSize) {
+      setShowSizeError(true);
+      return;
+    }
+
+    setShowSizeError(false);
     setIsAdding(true);
 
-    // Add the product to cart (multiple times based on quantity)
     for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+      addToCart(product, selectedSize);
     }
 
     // Reset after animation
@@ -75,13 +81,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     setMousePosition({ x, y });
   };
 
-  // Mock product images (in a real app, these would come from the product data)
-  const productImages = [
-    product.image || "/placeholder.svg?height=600&width=600",
-    "/placeholder.svg?height=600&width=600",
-    "/placeholder.svg?height=600&width=600",
-    "/placeholder.svg?height=600&width=600",
-  ];
+  const needsSize = Array.isArray(product.size) && product.size.length > 0;
 
   return (
     <>
@@ -91,15 +91,15 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         transition={{ delay: 0.1 }}
         className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-8"
       >
-        <button
-          onClick={() => router.push("/products")}
-          className="flex items-center hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Products
-        </button>
+        <Link href="/" passHref>
+          <button className="flex items-center hover:text-gray-900 dark:hover:text-white transition-colors">
+            Back to Products
+          </button>
+        </Link>
         <ChevronRight className="h-4 w-4 mx-2" />
-        <span>{product.category}</span>
+        <Link href={`/?category=${product.category}`} passHref>
+          <span>{product.category}</span>
+        </Link>
         <ChevronRight className="h-4 w-4 mx-2" />
         <span className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]">
           {product.name}
@@ -114,7 +114,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           transition={{ delay: 0.2 }}
           className="space-y-4"
         >
-          {/* Main Image */}
           <div
             className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 cursor-zoom-in"
             onClick={() => setIsImageZoomed(!isImageZoomed)}
@@ -150,39 +149,12 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               </div>
             )}
           </div>
-
-          {/* Thumbnail Images */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-4 gap-2"
-          >
-            {productImages.map((img, index) => (
-              <motion.button
-                key={index}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
-                  selectedImage === index
-                    ? "border-[#c2152a] ring-2 ring-[#c2152a]/20"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                }`}
-                onClick={() => setSelectedImage(index)}
-              >
-                <Image
-                  src={img || "/placeholder.svg"}
-                  alt={`${product.name} - view ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="100px"
-                />
-              </motion.button>
-            ))}
-          </motion.div>
+          <RelatedProducts
+            currentProductId={product.id}
+            categoryName={product.category}
+          ></RelatedProducts>
         </motion.div>
 
-        {/* Product Info */}
         <motion.div
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -206,28 +178,13 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               </h1>
             </motion.div>
 
-            {/* Rating */}
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
               className="flex items-center mb-4"
-            >
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < 4
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-300 dark:text-gray-600"
-                    }`}
-                  />
-                ))}
-              </div>
-            </motion.div>
+            ></motion.div>
 
-            {/* Price */}
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -261,25 +218,75 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 <p className="text-sm flex items-center">
                   <span
                     className={
-                      product.stock > 0 ? "text-green-600" : "text-red-600"
+                      product.quantity > 0 ? "text-green-600" : "text-red-600"
                     }
                   >
-                    {product.stock > 0 ? (
+                    {product.quantity > 0 ? (
                       <Check className="inline-block mr-1 h-4 w-4" />
                     ) : (
                       <X className="inline-block mr-1 h-4 w-4" />
                     )}
                   </span>
                   <span>
-                    {product.stock > 0
-                      ? `In Stock (${product.stock} available)`
+                    {product.quantity > 0
+                      ? `In Stock (${product.quantity} available)`
                       : "Out of Stock"}
                   </span>
                 </p>
               </div>
             </motion.div>
 
-            {/* Add to Cart */}
+            {needsSize && (
+              <motion.div
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.65 }}
+                className="mb-6"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <Label
+                    htmlFor="size-selection"
+                    className="text-sm font-medium"
+                  >
+                    Select Size
+                  </Label>
+                  <Link
+                    href="#size-guide"
+                    className="text-xs text-[#c2152a] hover:underline"
+                  >
+                    Size Guide
+                  </Link>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {product.size?.map((size) => (
+                    <Button
+                      key={size}
+                      type="button"
+                      variant={selectedSize === size ? "default" : "outline"}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        setShowSizeError(false);
+                      }}
+                      className={cn(
+                        "h-10 px-4 rounded-md",
+                        selectedSize === size &&
+                          "bg-[#c2152a] hover:bg-[#a01020]"
+                      )}
+                    >
+                      {size}
+                    </Button>
+                  ))}
+                </div>
+
+                {showSizeError && (
+                  <div className="mt-2 text-sm text-red-500 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    Please select a size before adding to cart
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -303,7 +310,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                   whileTap={{ scale: 0.95 }}
                   className="px-3 py-2 text-gray-600 dark:text-gray-300 rounded-r-md"
                   onClick={() => setQuantity(quantity + 1)}
-                  disabled={quantity >= product.stock}
+                  disabled={quantity >= product.quantity}
                 >
                   <Plus className="h-4 w-4" />
                 </motion.button>
@@ -317,7 +324,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 <Button
                   className="w-full bg-[#c2152a] hover:bg-[#a01020] text-white relative overflow-hidden"
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
+                  disabled={product.quantity === 0}
                 >
                   {isAdding ? (
                     <motion.span
@@ -327,7 +334,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     >
                       Added to Cart
                     </motion.span>
-                  ) : product.stock === 0 ? (
+                  ) : product.quantity === 0 ? (
                     <motion.span
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}

@@ -4,7 +4,6 @@ export default function ProductDetailLoading() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb skeleton */}
         <div className="flex items-center mb-8">
           <Skeleton className="h-5 w-32 mr-2" />
           <Skeleton className="h-5 w-5 mx-2" />
@@ -14,7 +13,6 @@ export default function ProductDetailLoading() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Images skeleton */}
           <div className="space-y-4">
             <Skeleton className="aspect-square w-full rounded-xl" />
             <div className="grid grid-cols-4 gap-2">
@@ -47,7 +45,6 @@ export default function ProductDetailLoading() {
           </div>
         </div>
 
-        {/* Related Products skeleton */}
         <div className="mt-16">
           <Skeleton className="h-8 w-48 mb-6" />
           <div className="h-px w-full bg-gray-200 dark:bg-gray-700 mb-6" />

@@ -64,7 +64,6 @@ export default function ProductsFilter() {
         </Button>
       </div>
 
-      {/* Desktop Sidebar */}
       <div className="hidden md:block w-56 flex-shrink-0">
         <div className="sticky top-24 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
           <h2 className="font-medium text-lg mb-3 text-gray-900 dark:text-white">

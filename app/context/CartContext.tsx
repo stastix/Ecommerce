@@ -1,10 +1,10 @@
 "use client";
-import { Product } from "@/lib/db/schema";
+import { CartProduct, Product } from "@/lib/db/schema";
 import { createContext, useContext, useState, ReactNode, useMemo } from "react";
 
 type CartContextType = {
-  cart: Product[];
-  addToCart: (product: Product) => void;
+  cart: CartProduct[];
+  addToCart: (product: Product, selectedSize: string | null) => void;
   removeFromCart: (productId: number) => void;
   totalAmount: number;
   isCartOpen: boolean;
@@ -15,31 +15,47 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | null>(null);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartProduct[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, selectedSize: string | null) => {
     setCart((prevCart) => {
-      const existingProduct = prevCart.find((item) => item.id === product.id);
+      const existingProduct = prevCart.find(
+        (item) =>
+          item.productId === product.id && item.selectedSize === selectedSize
+      );
+
       if (existingProduct) {
+        // If the product already exists, just increase its quantity
         return prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: (item.quantity ?? 1) + 1 }
+          item.productId === product.id && item.selectedSize === selectedSize
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
-        return [...prevCart, { ...product, quantity: 1 }];
+        const newItem: CartProduct = {
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1,
+          selectedSize,
+          category: "",
+        };
+        return [...prevCart, newItem];
       }
     });
   };
 
   const removeFromCart = (productId: number) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    setCart((prevCart) =>
+      prevCart.filter((item) => item.productId !== productId)
+    );
   };
   const updateQuantity = (productId: number, quantity: number) => {
     setCart((prevCart) => {
       return prevCart.map((item) =>
-        item.id === productId
+        item.productId === productId
           ? { ...item, quantity: item.quantity + quantity }
           : item
       );
@@ -47,10 +63,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const totalAmount = useMemo(() => {
-    return cart.reduce(
-      (total, item) => total + parseFloat(item.price) * item.quantity,
-      0
-    );
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [cart]);
 
   const toggleCart = () => {

@@ -57,7 +57,7 @@ export async function signout() {
   const supabase = createClient();
   const { error } = await (await supabase).auth.signOut();
   if (error) {
-    console.log(error);
+    console.error(error);
     redirect("/error");
   }
 
@@ -79,7 +79,7 @@ export async function signInWithGoogle() {
   });
 
   if (error) {
-    console.log(error);
+    console.error(error);
     redirect("/error");
   }
 
