@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import SocialLoginButtons from "./social-login-buttons";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface LoginFormProps {
   onError: (error: string) => void;
@@ -29,10 +30,11 @@ export default function LoginForm({ onError }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      console.log("email", data.user?.email);
 
       if (error) {
         onError(error.message);
@@ -40,7 +42,7 @@ export default function LoginForm({ onError }: LoginFormProps) {
       }
 
       router.refresh();
-      router.push("/dashboard");
+      router.push("/");
     } catch (err) {
       onError("An unexpected error occurred");
       console.error(err);
@@ -67,12 +69,13 @@ export default function LoginForm({ onError }: LoginFormProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <a
+            <Link
               href="/login?mode=forgot-password"
               className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              passHref
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <Input

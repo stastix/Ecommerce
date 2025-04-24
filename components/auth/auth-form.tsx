@@ -2,33 +2,40 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import LoginForm from "./login-form";
+import LoginForm from "../auth/login-form";
 import SignUpForm from "./signup-form";
 import ForgotPasswordForm from "./forgot-password-form";
 import AuthFormToggle from "./auth-form-toggle";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 type AuthMode = "login" | "signup" | "forgot-password";
 
 export default function AuthForm() {
+  const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState<string | null>(null);
 
-  // Update mode based on URL parameters
   useEffect(() => {
-    const urlMode = searchParams.get("mode");
-    if (urlMode === "signup" || urlMode === "forgot-password") {
-      setMode(urlMode);
-    } else {
-      setMode("login");
+    async function fetchAuthMode() {
+      const urlMode = searchParams.get("mode");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      console.log("email 1 ", session?.user.email);
+      if (urlMode === "signup" || urlMode === "forgot-password") {
+        setMode(urlMode);
+      } else {
+        setMode("login");
+      }
     }
-  }, [searchParams]);
+    fetchAuthMode();
+  }, [searchParams, supabase.auth]);
 
   const handleModeChange = (newMode: AuthMode) => {
     setError(null);
-
-    // Update URL to reflect the current mode
     if (newMode === "login") {
       router.push("/login");
     } else {

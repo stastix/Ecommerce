@@ -39,17 +39,11 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClientComponentClient();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const cartItemsCount = Array.isArray(cart) ? cart.length : 0;
 
-  // Check if user is logged in
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -58,7 +52,6 @@ export default function Header() {
         } = await supabase.auth.getSession();
         setUser(session?.user || null);
 
-        // Set up auth state listener
         const {
           data: { subscription },
         } = await supabase.auth.onAuthStateChange((_event, session) => {
@@ -159,33 +152,30 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Theme Toggle - Fixed width to prevent layout shift */}
             <div className="w-10 h-10 flex items-center justify-center">
-              {isClient && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="rounded-full"
-                  aria-label="Toggle theme"
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.div
-                      key={theme}
-                      initial={{ y: -20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 20, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {theme === "dark" ? (
-                        <Sun className="h-5 w-5" />
-                      ) : (
-                        <Moon className="h-5 w-5" />
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="rounded-full"
+                aria-label="Toggle theme"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={theme}
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 20, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="h-5 w-5" />
+                    ) : (
+                      <Moon className="h-5 w-5" />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </Button>
             </div>
 
             {/* Cart Button - Fixed width to prevent layout shift */}
@@ -211,7 +201,7 @@ export default function Header() {
 
             {/* Auth Section - Fixed width container to prevent layout shift */}
             <div className="h-10 flex items-center">
-              {isClient && !isLoading ? (
+              {!isLoading ? (
                 <>
                   {user ? (
                     // Logged in state
@@ -344,8 +334,7 @@ export default function Header() {
                 </Link>
               ))}
 
-              {/* Login/Signup buttons for mobile when logged out */}
-              {isClient && !user && (
+              {!user && (
                 <div className="pt-2 pb-1">
                   <div className="border-t border-gray-200 dark:border-gray-800 pt-2 flex flex-col gap-2">
                     <button

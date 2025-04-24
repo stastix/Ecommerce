@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { cache } from "react";
+import { CartProduct } from "./schema";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey =
@@ -8,6 +9,21 @@ const supabaseKey =
   "";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+export async function getCart(userId: string) {
+  const { data, error } = await supabase
+    .from("carts")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Failed to get cart:", error.message);
+    throw new Error("Failed to get cart");
+  }
+
+  return data;
+}
 
 export async function getProductsByCategory(
   category: string,
@@ -56,6 +72,62 @@ export async function getProductsByCategory(
       hasMore: to < (countResponse.count || 0) - 1,
     },
   };
+}
+
+export async function upsertCart(userId: string, products: CartProduct[]) {
+  const existingCart = await getCart(userId);
+
+  if (existingCart) {
+    return updateCart(userId, products);
+  } else {
+    return createCart(userId, products);
+  }
+}
+
+export async function createCart(userId: string, products: CartProduct[]) {
+  const { data, error } = await supabase
+    .from("carts")
+    .insert([
+      {
+        user_id: userId,
+        products: products,
+      },
+    ])
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Failed to create cart:", error.message);
+    throw new Error("Cart creation failed");
+  }
+
+  return data;
+}
+export async function deleteCart(userId: string) {
+  const { error } = await supabase.from("carts").delete().eq("user_id", userId);
+
+  if (error) {
+    console.error("Failed to delete cart:", error.message);
+    throw new Error("Cart deletion failed");
+  }
+
+  return true;
+}
+
+export async function updateCart(userId: string, products: CartProduct[]) {
+  const { data, error } = await supabase
+    .from("carts")
+    .update({ products })
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Failed to update cart:", error.message);
+    throw new Error("Cart update failed");
+  }
+
+  return data;
 }
 
 export const getRelatedProducts = cache(
@@ -134,11 +206,8 @@ export async function searchProducts(
   query: string,
   { page = 0, limit = 12, sortBy = "created_at", order = "desc" } = {}
 ) {
-  // Calculate range for Supabase pagination
   const from = page * limit;
   const to = from + limit - 1;
-
-  // Use Promise.all to run queries in parallel
   const [productsResponse, countResponse] = await Promise.all([
     // Query with pagination and search filter
     supabase

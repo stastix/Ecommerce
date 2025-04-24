@@ -10,11 +10,12 @@ import {
   Plus,
   ShoppingBag,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { CheckoutButton } from "./checkout-button";
 
 const CartSidebar = () => {
   const {
@@ -37,7 +38,7 @@ const CartSidebar = () => {
     };
   }, [isCartOpen]);
 
-  const router = useRouter();
+  // const router = useRouter();
 
   const handlePlusClick = (productId: number) => {
     updateQuantity(productId, 1);
@@ -47,10 +48,10 @@ const CartSidebar = () => {
     updateQuantity(productId, -1);
   };
 
-  const handleCheckoutClick = () => {
-    router.push("/checkout");
-    toggleCart();
-  };
+  // const handleCheckoutClick = () => {
+  //   router.push("/checkout");
+  //   toggleCart();
+  // };
 
   return (
     <>
@@ -161,9 +162,15 @@ const CartSidebar = () => {
                           <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {product.name}
                           </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                            {product.price} TND
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
+                            <span>{product.price} TND</span>
+                            {product.selectedSize && (
+                              <span className="text-sm text-gray-400 ml-3">
+                                {product.selectedSize}
+                              </span>
+                            )}
                           </p>
+
                           <div className="flex items-center mt-2">
                             <Button
                               variant="outline"
@@ -235,16 +242,9 @@ const CartSidebar = () => {
                   {totalAmount.toFixed(2)} TND
                 </span>
               </div>
-
-              <Button
-                variant="default"
-                className="w-full mt-2 bg-[#c2152a] hover:bg-[#a01020] text-white dark:bg-red-600 dark:hover:bg-red-700"
-                disabled={cart.length === 0}
-                onClick={handleCheckoutClick}
-              >
-                Proceed to Checkout
-              </Button>
-
+              <div className="flex flex-col gap-2 mt-4">
+                <CheckoutButton cartProducts={cart} />
+              </div>
               <Button
                 variant="outline"
                 className="w-full mt-2 dark:text-gray-300 dark:border-gray-600"

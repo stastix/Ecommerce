@@ -14,9 +14,10 @@ import { useRouter } from "next/navigation";
 
 interface SignUpFormProps {
   onError: (error: string) => void;
+  returnUrl?: string;
 }
 
-export default function SignUpForm({ onError }: SignUpFormProps) {
+export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -30,7 +31,6 @@ export default function SignUpForm({ onError }: SignUpFormProps) {
     setIsLoading(true);
 
     try {
-      // Sign up with Supabase
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -45,10 +45,8 @@ export default function SignUpForm({ onError }: SignUpFormProps) {
         onError(error.message);
         return;
       }
-
-      // Show success message or redirect
       router.refresh();
-      router.push("/auth/verify-email");
+      router.push(returnUrl || "/");
     } catch (err) {
       onError("An unexpected error occurred");
       console.error(err);

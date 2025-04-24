@@ -11,7 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import { z } from "zod";
-import CustomMap from "@/components/Map";
+import dynamic from "next/dynamic";
+const CustomMap = dynamic(() => import("@/components/Map"), {
+  ssr: false,
+});
 
 type ContactFormData = {
   name: string;
@@ -27,6 +30,7 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
+
   const [errors, setErrors] = useState<
     Partial<Record<keyof ContactFormData, string>>
   >({});
@@ -78,7 +82,6 @@ export default function ContactPage() {
     }
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

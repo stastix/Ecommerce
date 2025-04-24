@@ -13,7 +13,16 @@ export async function GET(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    // Add caching headers for the response
+    const response = NextResponse.json(product);
+
+    // Set cache headers
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=3600, stale-while-revalidate=3600"
+    );
+
+    return response;
   } catch (error) {
     console.error("Error in product API route:", error);
     return NextResponse.json(

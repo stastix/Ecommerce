@@ -5,11 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useMemo, useCallback, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import dynamic from "next/dynamic";
-
-const ProductCard = dynamic(() => import("@/components/productCard"), {
-  loading: () => <ProductCardSkeleton />,
-});
+import ProductCard from "./productCard";
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -36,11 +32,9 @@ export function ProductsGridSkeleton() {
 }
 
 function NoProductsFound({
-  searchQuery,
   category,
   isLoading = false,
 }: {
-  searchQuery: string | null;
   category: string | null;
   isLoading?: boolean;
 }) {
@@ -71,10 +65,6 @@ function NoProductsFound({
       </h3>
       <p className="text-gray-500 dark:text-gray-400 mb-6">
         {isLoading
-          ? "Please wait while we fetch the products."
-          : searchQuery
-          ? `We couldn't find any products matching "${searchQuery}".`
-          : category
           ? `We couldn't find any products in the "${category}" category.`
           : "We couldn't find any products."}
       </p>
@@ -85,11 +75,20 @@ function NoProductsFound({
 export default function ProductsGrid() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
-  const searchQuery = searchParams.get("search");
 
+  // Get other filter parameters from URL
+  const minPrice = searchParams.get("minPrice")
+    ? Number(searchParams.get("minPrice"))
+    : null;
+  const maxPrice = searchParams.get("maxPrice")
+    ? Number(searchParams.get("maxPrice"))
+    : null;
+  const inStock = searchParams.get("inStock") === "true";
+
+  // Create a cache key that includes all filter parameters
   const queryKey = useMemo(
-    () => ["products", { category, search: searchQuery }],
-    [category, searchQuery]
+    () => ["products", { category, minPrice, maxPrice, inStock }],
+    [category, minPrice, maxPrice, inStock]
   );
 
   const { ref, inView } = useInView({
@@ -98,23 +97,36 @@ export default function ProductsGrid() {
     rootMargin: "200px",
   });
 
+  // Build query string with all active filters
+  const buildQueryString = useCallback(
+    (pageParam: number) => {
+      const params = new URLSearchParams();
+      params.append("page", pageParam.toString());
+      params.append("limit", PRODUCTS_PER_PAGE.toString());
+
+      if (minPrice !== null) params.append("minPrice", minPrice.toString());
+      if (maxPrice !== null) params.append("maxPrice", maxPrice.toString());
+      if (inStock) params.append("inStock", "true");
+
+      return params.toString();
+    },
+    [minPrice, maxPrice, inStock]
+  );
+
   const fetchProducts = useCallback(
     async ({ pageParam = 0 }) => {
-      let url = `/api/products?page=${pageParam}&limit=${PRODUCTS_PER_PAGE}`;
-
+      // Build base URL based on category
+      let baseUrl = "/api/products";
       if (category) {
-        url = `/api/products/category/${encodeURIComponent(
-          category
-        )}?page=${pageParam}&limit=${PRODUCTS_PER_PAGE}`;
+        baseUrl = `/api/products/category/${encodeURIComponent(category)}`;
       }
 
-      if (searchQuery) {
-        url = `/api/search?q=${encodeURIComponent(
-          searchQuery
-        )}&page=${pageParam}&limit=${PRODUCTS_PER_PAGE}`;
-      }
+      // Add query parameters for filtering
+      const queryString = buildQueryString(pageParam);
+      const url = `${baseUrl}?${queryString}`;
+
       const res = await fetch(url, {
-        cache: category || searchQuery ? "no-store" : "force-cache",
+        cache: category ? "no-store" : "force-cache",
         next: { revalidate: 3600 },
       });
 
@@ -123,10 +135,9 @@ export default function ProductsGrid() {
       }
 
       const json = await res.json();
-      
       return json.data || [];
     },
-    [category, searchQuery]
+    [category, buildQueryString]
   );
 
   const {
@@ -186,35 +197,32 @@ export default function ProductsGrid() {
       </div>
     );
   }
+
   if (isLoading) {
-    return (
-      <NoProductsFound
-        searchQuery={searchQuery}
-        category={category}
-        isLoading={true}
-      />
-    );
+    return <NoProductsFound category={category} isLoading={true} />;
   }
 
   // Show empty state when no products are found after loading
   if (allProducts.length === 0) {
-    return (
-      <NoProductsFound
-        searchQuery={searchQuery}
-        category={category}
-        isLoading={false}
-      />
-    );
+    return <NoProductsFound category={category} isLoading={false} />;
   }
 
   return (
     <>
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {allProducts.map((product, index) => (
-          <div key={`${product.id}-${index}`}>
-            <Suspense fallback={<ProductCardSkeleton />}>
-              <ProductCard product={product} priority={index < 4} />
-            </Suspense>
+          <div key={`${product.id}-${index}`} className="h-full">
+            {index < 8 ? (
+              <ProductCard
+                product={product}
+                priority={index < 4}
+                index={index}
+              />
+            ) : (
+              <Suspense fallback={<ProductCardSkeleton />}>
+                <ProductCard product={product} index={index} />
+              </Suspense>
+            )}
           </div>
         ))}
       </div>
