@@ -4,7 +4,6 @@ This is a simple eCommerce web app demo that allows users to add products to the
 
 ## Table of Contents
 
-- [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
@@ -13,14 +12,6 @@ This is a simple eCommerce web app demo that allows users to add products to the
 - [Contributing](#contributing)
 - [License](#license)
 
-## Features
-
-- **User Authentication**: Integrated with Supabase for easy authentication using email/password or third-party logins.
-- **Real-time Data**: Updates users on padel court availability and bookings in real-time.
-- **Booking Management**: Users can view available courts and book them directly.
-- **Event Management**: Organize padel events and allow users to register.
-- **User Profile**: Personal profiles where users can manage their bookings, events, and preferences.
-- **Modern UI**: Uses ShadCN for modern, responsive UI components that enhance the user experience.
 
 ## Tech Stack
 
@@ -57,7 +48,7 @@ To get started with the development environment, you’ll need the following too
 
    ```bash
    git clone https://github.com/stastix/Ecommerce
-   cd museal-padel
+   cd Ecommerce
    ```
 
 2. Install dependecies:
