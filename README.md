@@ -1,6 +1,6 @@
-# Museal Padel
+# Ecommerce
 
-Museal Padel is a web application designed to streamline various operations related to padel, such as booking, event management, and user interactions. It leverages Supabase as its backend to handle authentication, database management, and real-time data, while using ShadCN for UI components.
+This is a simple eCommerce web app demo that allows users to add products to their cart. The app uses **Supabase** for user authentication and basic cart management. When a user adds a product to the cart, they are redirected to a login page (for demo purposes). The app also uses **ShadCN** for modern UI components.
 
 ## Table of Contents
 
