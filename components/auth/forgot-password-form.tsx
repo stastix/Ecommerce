@@ -50,8 +50,9 @@ export default function ForgotPasswordForm({
     return (
       <div className="space-y-4">
         <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-4 rounded-md text-sm">
-          We&apos;ve sent a password reset link to <strong>{email}</strong>. Please
-          check your inbox and follow the instructions to reset your password.
+          We&apos;ve sent a password reset link to <strong>{email}</strong>.
+          Please check your inbox and follow the instructions to reset your
+          password.
         </div>
         <Button onClick={onSuccess} className="w-full">
           Return to Login

@@ -149,7 +149,7 @@ export default function ContactPage() {
                 href="tel:+1234567890"
                 className="text-[#c2152a] font-medium hover:underline"
               >
-                (+216) 46 919 619
+                (+216) 21 000 000
               </a>
             </motion.div>
 
@@ -188,9 +188,9 @@ export default function ContactPage() {
                 Come say hello at our office
               </p>
               <address className="text-[#c2152a] font-medium not-italic">
-                Mohamed Bairem Elkhames,
+                somewhere,
                 <br />
-                La Marsa, 2070
+                La Marsa
               </address>
             </motion.div>
           </motion.div>
@@ -382,7 +382,7 @@ export default function ContactPage() {
                   </p>
                   <div className="flex space-x-4 mt-3">
                     <a
-                      href="https://www.facebook.com/people/MusealPadel/61564666577906/"
+                      href="https://www.facebook.com"
                       className="text-gray-600 hover:text-[#c2152a] dark:text-gray-300 dark:hover:text-[#c2152a] transition-colors"
                     >
                       <svg
@@ -399,7 +399,7 @@ export default function ContactPage() {
                       </svg>
                     </a>
                     <a
-                      href="https://www.instagram.com/museal_padel/"
+                      href="https://www.instagram.com"
                       className="text-gray-600 hover:text-[#c2152a] dark:text-gray-300 dark:hover:text-[#c2152a] transition-colors"
                     >
                       <svg

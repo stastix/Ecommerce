@@ -31,13 +31,7 @@ export function ProductsGridSkeleton() {
   );
 }
 
-function NoProductsFound({
-  category,
-  isLoading = false,
-}: {
-  category: string | null;
-  isLoading?: boolean;
-}) {
+function NoProductsFound({ isLoading = false }: { isLoading?: boolean }) {
   return (
     <div className="text-center py-12">
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
@@ -61,13 +55,8 @@ function NoProductsFound({
         )}
       </div>
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        {isLoading ? "Loading products..." : "No products found"}
+        {isLoading && "Loading products..."}
       </h3>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">
-        {isLoading
-          ? `We couldn't find any products in the "${category}" category.`
-          : "We couldn't find any products."}
-      </p>
     </div>
   );
 }
@@ -76,7 +65,6 @@ export default function ProductsGrid() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
 
-  // Get other filter parameters from URL
   const minPrice = searchParams.get("minPrice")
     ? Number(searchParams.get("minPrice"))
     : null;
@@ -85,7 +73,6 @@ export default function ProductsGrid() {
     : null;
   const inStock = searchParams.get("inStock") === "true";
 
-  // Create a cache key that includes all filter parameters
   const queryKey = useMemo(
     () => ["products", { category, minPrice, maxPrice, inStock }],
     [category, minPrice, maxPrice, inStock]
@@ -97,7 +84,6 @@ export default function ProductsGrid() {
     rootMargin: "200px",
   });
 
-  // Build query string with all active filters
   const buildQueryString = useCallback(
     (pageParam: number) => {
       const params = new URLSearchParams();
@@ -115,13 +101,10 @@ export default function ProductsGrid() {
 
   const fetchProducts = useCallback(
     async ({ pageParam = 0 }) => {
-      // Build base URL based on category
       let baseUrl = "/api/products";
       if (category) {
         baseUrl = `/api/products/category/${encodeURIComponent(category)}`;
       }
-
-      // Add query parameters for filtering
       const queryString = buildQueryString(pageParam);
       const url = `${baseUrl}?${queryString}`;
 
@@ -199,12 +182,11 @@ export default function ProductsGrid() {
   }
 
   if (isLoading) {
-    return <NoProductsFound category={category} isLoading={true} />;
+    return <NoProductsFound isLoading={true} />;
   }
 
-  // Show empty state when no products are found after loading
   if (allProducts.length === 0) {
-    return <NoProductsFound category={category} isLoading={false} />;
+    return <NoProductsFound isLoading={false} />;
   }
 
   return (
@@ -213,14 +195,10 @@ export default function ProductsGrid() {
         {allProducts.map((product, index) => (
           <div key={`${product.id}-${index}`} className="h-full">
             {index < 8 ? (
-              <ProductCard
-                product={product}
-                priority={index < 4}
-                index={index}
-              />
+              <ProductCard product={product} priority={index < 4} />
             ) : (
               <Suspense fallback={<ProductCardSkeleton />}>
-                <ProductCard product={product} index={index} />
+                <ProductCard product={product} />
               </Suspense>
             )}
           </div>

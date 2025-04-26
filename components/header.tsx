@@ -33,38 +33,41 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export default function Header() {
   const { setTheme, theme } = useTheme();
-  const { cart, toggleCart } = useCart();
+  const { cart } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const supabase = createClientComponentClient();
 
+  // Set isClient to true after component mounts to avoid hydration mismatch
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Calculate cart items count
   const cartItemsCount = Array.isArray(cart) ? cart.length : 0;
 
+  // Check if user is logged in
   useEffect(() => {
     const getUser = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+
+      // Set up auth state listener
+      const {
+        data: { subscription },
+      } = await supabase.auth.onAuthStateChange((_event, session) => {
         setUser(session?.user || null);
+      });
 
-        const {
-          data: { subscription },
-        } = await supabase.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user || null);
-        });
-
-        return () => {
-          subscription.unsubscribe();
-        };
-      } finally {
-        // Set loading to false regardless of outcome
-        setIsLoading(false);
-      }
+      return () => {
+        subscription.unsubscribe();
+      };
     };
 
     getUser();
@@ -129,10 +132,12 @@ export default function Header() {
                 />
               </div>
               <div className="text-xl md:text-2xl font-bold tracking-tight">
-                Museal.<span className="text-[#c2152a]">Padel</span>
+                Ecommerce.<span className="text-[#c2152a]">Demo</span>
               </div>
             </Link>
           </div>
+
+          {/* Search Bar - Add this section */}
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
@@ -152,7 +157,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
+            {isClient && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -176,14 +181,13 @@ export default function Header() {
                   </motion.div>
                 </AnimatePresence>
               </Button>
-            </div>
+            )}
 
-            {/* Cart Button - Fixed width to prevent layout shift */}
-            <div className="w-10 h-10 flex items-center justify-center">
+            {/* Cart Button */}
+            <Link href="/cart" passHref>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => toggleCart()}
                 className="rounded-full relative"
                 aria-label="View cart"
               >
@@ -197,113 +201,99 @@ export default function Header() {
                   </Badge>
                 )}
               </Button>
-            </div>
+            </Link>
 
-            {/* Auth Section - Fixed width container to prevent layout shift */}
-            <div className="h-10 flex items-center">
-              {!isLoading ? (
-                <>
-                  {user ? (
-                    // Logged in state
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="rounded-full p-0"
-                          aria-label="User menu"
-                        >
-                          <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
-                            <AvatarImage
-                              src={
-                                user.user_metadata?.avatar_url ||
-                                "https://github.com/shadcn.png"
-                              }
-                              alt="@user"
-                            />
-                            <AvatarFallback className="bg-[#c2152a] text-white">
-                              {user.user_metadata?.full_name?.[0] ||
-                                user.email?.[0] ||
-                                "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>
-                          {user.user_metadata?.full_name || user.email}
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => router.push("/profile")}
-                        >
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => router.push("/orders")}
-                        >
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          <span>Orders</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => router.push("/settings")}
-                        >
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>Settings</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                          <LogOut className="mr-2 h-4 w-4" />
-                          <span>Log out</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    // Logged out state
-                    <div className="flex items-center gap-2">
+            {/* User Menu or Login/Signup - Only render after client-side hydration */}
+            {isClient && (
+              <>
+                {user ? (
+                  // Logged in state
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="hidden sm:inline-flex"
-                        onClick={() => navigateToAuth("login")}
+                        className="rounded-full p-0"
+                        aria-label="User menu"
                       >
-                        Sign In
+                        <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
+                          <AvatarImage
+                            src={
+                              user.user_metadata?.avatar_url ||
+                              "https://github.com/shadcn.png"
+                            }
+                            alt="@user"
+                          />
+                          <AvatarFallback className="bg-[#c2152a] text-white">
+                            {user.user_metadata?.full_name?.[0] ||
+                              user.email?.[0] ||
+                              "U"}
+                          </AvatarFallback>
+                        </Avatar>
                       </Button>
-                      <Button
-                        className="bg-[#c2152a] hover:bg-[#a01020] text-white"
-                        size="sm"
-                        onClick={() => navigateToAuth("signup")}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>
+                        {user.user_metadata?.full_name || user.email}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push("/profile")}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push("/orders")}>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        <span>Orders</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => router.push("/settings")}
                       >
-                        Sign Up
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                // Loading state placeholder with same dimensions
-                <div className="flex items-center gap-2">
-                  <div className="hidden sm:block w-16 h-8"></div>
-                  <div className="w-20 h-8"></div>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile Menu Button - Fixed width to prevent layout shift */}
-            <div className="w-10 h-10 md:hidden flex items-center justify-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              >
-                {mobileMenuOpen ? (
-                  <X className="h-5 w-5" />
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
-                  <Menu className="h-5 w-5" />
+                  // Logged out state
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="hidden sm:inline-flex"
+                      onClick={() => navigateToAuth("login")}
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      className="bg-[#c2152a] hover:bg-[#a01020] text-white"
+                      size="sm"
+                      onClick={() => navigateToAuth("signup")}
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
                 )}
-              </Button>
-            </div>
+              </>
+            )}
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden rounded-full"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
           </div>
         </div>
       </div>
@@ -334,7 +324,8 @@ export default function Header() {
                 </Link>
               ))}
 
-              {!user && (
+              {/* Login/Signup buttons for mobile when logged out */}
+              {isClient && !user && (
                 <div className="pt-2 pb-1">
                   <div className="border-t border-gray-200 dark:border-gray-800 pt-2 flex flex-col gap-2">
                     <button
@@ -352,28 +343,6 @@ export default function Header() {
                   </div>
                 </div>
               )}
-
-              <div className="pt-2 pb-1">
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-2">
-                  <p className="px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    More
-                  </p>
-                  <Link
-                    href="/blog"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Blog
-                  </Link>
-                  <Link
-                    href="/faq"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    FAQ
-                  </Link>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}

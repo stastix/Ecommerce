@@ -1,3 +1,4 @@
+
 import { Suspense } from "react";
 import { ProductsGridSkeleton } from "@/components/ui/productsGrid-skeleton";
 import nextDynamic from "next/dynamic";

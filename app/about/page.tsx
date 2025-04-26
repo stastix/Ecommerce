@@ -29,25 +29,25 @@ export default function AboutPage() {
     {
       name: "Alex Johnson",
       role: "Founder & CEO",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/team-1.jpg",
       bio: "Alex founded the company in 2015 with a vision to create premium products that combine style and functionality.",
     },
     {
       name: "Sarah Chen",
       role: "Head of Design",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/team-1.jpg",
       bio: "Sarah leads our design team, bringing over 10 years of experience in product design and development.",
     },
     {
       name: "Michael Rodriguez",
       role: "Marketing Director",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/team-1.jpg",
       bio: "Michael oversees our marketing strategy, focusing on building authentic connections with our customers.",
     },
     {
       name: "Emma Wilson",
       role: "Product Manager",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/team-1.jpg",
       bio: "Emma ensures that our products meet the highest standards of quality and customer satisfaction.",
     },
   ];
@@ -156,7 +156,7 @@ export default function AboutPage() {
             >
               <div className="relative aspect-square rounded-2xl overflow-hidden">
                 <Image
-                  src="/placeholder.svg?height=600&width=600"
+                  src="/digital-wardrobe-transparent-screen.jpg"
                   alt="Our mission"
                   fill
                   className="object-cover"

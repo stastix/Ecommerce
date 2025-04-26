@@ -1,10 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db/queries";
 
-export const revalidate = 3600; 
-export const dynamic = "force-dynamic"; // Always render dynamically
+export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
-// Helper function to handle API errors
 function handleApiError(error: Error, message: string) {
   console.error(message, error);
   return NextResponse.json({ error: message }, { status: 500 });
@@ -12,7 +11,6 @@ function handleApiError(error: Error, message: string) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Parse query parameters for pagination and sorting
     const { searchParams } = new URL(request.url);
     const page = Number.parseInt(searchParams.get("page") || "0", 10);
     const limit = Number.parseInt(searchParams.get("limit") || "12", 10);
