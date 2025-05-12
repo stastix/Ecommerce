@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import { z } from "zod";
 import dynamic from "next/dynamic";
+import { contactSchema } from "../api/contact/route";
 const CustomMap = dynamic(() => import("@/components/Map"), {
   ssr: false,
 });
@@ -42,8 +43,6 @@ export default function ContactPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear error when user starts typing
     if (errors[name as keyof ContactFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -55,8 +54,8 @@ export default function ContactPage() {
     setErrors({});
 
     try {
+      contactSchema.parse(formData);
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
@@ -288,7 +287,6 @@ export default function ContactPage() {
                       </p>
                     )}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="message">Message</Label>
                     <Textarea
@@ -298,11 +296,11 @@ export default function ContactPage() {
                       onChange={handleChange}
                       placeholder="Your message here..."
                       rows={5}
-                      className={
+                      className={`${
                         errors.message
                           ? "border-red-500 focus-visible:ring-red-500"
                           : ""
-                      }
+                      } text-gray-900 dark:text-white bg-white dark:bg-gray-700`}
                     />
                     {errors.message && (
                       <p className="text-red-500 text-sm mt-1">
