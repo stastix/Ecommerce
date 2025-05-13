@@ -13,10 +13,8 @@ export async function GET(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Add caching headers for the response
     const response = NextResponse.json(product);
 
-    // Set cache headers
     response.headers.set(
       "Cache-Control",
       "public, max-age=3600, stale-while-revalidate=3600"

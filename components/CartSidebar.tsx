@@ -62,7 +62,7 @@ const CartSidebar = () => {
         className="fixed bottom-6 right-6 z-10 rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
         aria-label="Open cart"
       >
-        <CartIcon className="h-6 w-6 text-gray-900 dark:text-white" />
+        <CartIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-900 dark:text-white mx-auto" />
         {cart.length > 0 && (
           <Badge
             className="absolute -top-2 -right-2 px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#c2152a] text-white text-xs"

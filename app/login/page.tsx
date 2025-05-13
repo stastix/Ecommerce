@@ -5,7 +5,7 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "Authentication",
   description: "Login or create an account",
-}; 
+};
 
 export default function LoginPage() {
   return (

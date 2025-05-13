@@ -31,7 +31,8 @@ export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -45,8 +46,30 @@ export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
         onError(error.message);
         return;
       }
-      router.refresh();
-      router.push(returnUrl || "/");
+
+      // Check if email confirmation is required
+      if (data?.user?.identities?.length === 0) {
+        // User already exists but hasn't confirmed their email
+        onError(
+          "An account with this email already exists. Please check your email or try logging in."
+        );
+        return;
+      }
+
+      // Check if email confirmation is required
+      if (data?.user && !data?.session) {
+        // Redirect to verification page instead of home
+        router.push("/verify-email?email=" + encodeURIComponent(email));
+        return;
+      }
+
+      // If we have a session, the user is already authenticated
+      if (data?.session) {
+        // Refresh to update auth state
+        router.refresh();
+        // Redirect to return URL or home
+        router.push(returnUrl || "/");
+      }
     } catch (err) {
       onError("An unexpected error occurred");
       console.error(err);

@@ -28,8 +28,6 @@ export async function GET(request: NextRequest) {
         .range(from, to),
       supabase.from("products").select("id", { count: "exact", head: true }),
     ]);
-
-    // Error handling for the product fetch response
     if (productsResponse.error) {
       return handleApiError(
         productsResponse.error,
@@ -37,7 +35,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Error handling for the count fetch response
     if (countResponse.error) {
       return handleApiError(
         countResponse.error,
@@ -48,7 +45,6 @@ export async function GET(request: NextRequest) {
     const result = productsResponse.data || [];
     const count = countResponse.count || 0;
 
-    // Enhanced pagination logic with additional details
     const totalPages = Math.ceil(count / limit);
     const hasMore = page < totalPages - 1;
 
@@ -71,6 +67,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
+    console.error("🔥 Error in GET /api/products", error);
     return handleApiError(error as Error, "🔥 Error in GET /api/products");
   }
 }

@@ -107,7 +107,6 @@ export default function ProductsGrid() {
       }
       const queryString = buildQueryString(pageParam);
       const url = `${baseUrl}?${queryString}`;
-
       const res = await fetch(url, {
         cache: category ? "no-store" : "force-cache",
         next: { revalidate: 3600 },
@@ -116,13 +115,11 @@ export default function ProductsGrid() {
       if (!res.ok) {
         throw new Error(`Failed to fetch: ${res.status}`);
       }
-
       const json = await res.json();
       return json.data || [];
     },
     [category, buildQueryString]
   );
-
   const {
     data,
     fetchNextPage,

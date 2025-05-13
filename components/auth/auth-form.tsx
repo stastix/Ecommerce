@@ -23,8 +23,10 @@ export default function AuthForm() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
-      console.log("email 1 ", session?.user.email);
+      if (session) {
+        router.push("/");
+        return;
+      }
       if (urlMode === "signup" || urlMode === "forgot-password") {
         setMode(urlMode);
       } else {

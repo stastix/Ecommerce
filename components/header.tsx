@@ -73,7 +73,6 @@ export default function Header() {
     getUser();
   }, [supabase.auth]);
 
-  // Track scroll position for header styling
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -128,8 +127,10 @@ export default function Header() {
                   src="/logo.svg"
                   alt="Museal Padel Logo"
                   fill
-                  className="object-contain"
-                />
+                  className={`object-contain ${
+                    theme === "dark" ? "invert" : ""
+                  }`}
+                />{" "}
               </div>
               <div className="text-xl md:text-2xl font-bold tracking-tight">
                 Ecommerce.<span className="text-[#c2152a]">Demo</span>
@@ -137,9 +138,6 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Search Bar - Add this section */}
-
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
@@ -203,11 +201,9 @@ export default function Header() {
               </Button>
             </Link>
 
-            {/* User Menu or Login/Signup - Only render after client-side hydration */}
             {isClient && (
               <>
                 {user ? (
-                  // Logged in state
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button

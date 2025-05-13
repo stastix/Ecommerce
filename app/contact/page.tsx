@@ -52,7 +52,6 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
-
     try {
       contactSchema.parse(formData);
       await new Promise((resolve) => setTimeout(resolve, 1500));
