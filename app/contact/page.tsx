@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import { z } from "zod";
 import dynamic from "next/dynamic";
-import { contactSchema } from "../api/contact/route";
 const CustomMap = dynamic(() => import("@/components/Map"), {
   ssr: false,
 });
@@ -23,6 +22,12 @@ type ContactFormData = {
   subject: string;
   message: string;
 };
+const contactSchema = z.object({
+  name: z.string().min(1, "name is required").max(50),
+  email: z.string().email("invalid email"),
+  subject: z.string().min(1, "subject is required").max(50),
+  message: z.string().min(1, "message is required").max(500),
+});
 
 export default function ContactPage() {
   const [formData, setFormData] = useState<ContactFormData>({

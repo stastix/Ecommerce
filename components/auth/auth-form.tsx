@@ -10,6 +10,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 type AuthMode = "login" | "signup" | "forgot-password";
 
+export const dynamic = "force-dynamic";
+
 export default function AuthForm() {
   const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
@@ -34,7 +36,7 @@ export default function AuthForm() {
       }
     }
     fetchAuthMode();
-  }, [searchParams, supabase.auth]);
+  }, [router, searchParams, supabase.auth]);
 
   const handleModeChange = (newMode: AuthMode) => {
     setError(null);
