@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import SocialLoginButtons from "./social-login-buttons";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface LoginFormProps {
   onError: (error: string) => void;
@@ -22,13 +22,38 @@ export default function LoginForm({ onError }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          // Handle unconfirmed email case
+          onError(
+            "Please check your email to confirm your account before logging in."
+          );
+        } else {
+          onError(error.message);
+        }
+        return;
+      }
+
+      if (!data.session) {
+        onError("Failed to sign in. Please try again.");
+        return;
+      }
+
       router.refresh();
+
+      // Redirect to dashboard or home
       router.push("/");
     } catch (err) {
       onError("An unexpected error occurred");
@@ -56,13 +81,12 @@ export default function LoginForm({ onError }: LoginFormProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link
+            <a
               href="/login?mode=forgot-password"
               className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-              passHref
             >
               Forgot password?
-            </Link>
+            </a>
           </div>
           <div className="relative">
             <Input

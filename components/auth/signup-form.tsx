@@ -38,6 +38,9 @@ export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
         options: {
           data: {
             full_name: name,
+            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              name
+            )}&background=random`,
           },
         },
       });
@@ -47,9 +50,8 @@ export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
         return;
       }
 
-      // Check if email confirmation is required
+      // Check if user already exists but hasn't confirmed email
       if (data?.user?.identities?.length === 0) {
-        // User already exists but hasn't confirmed their email
         onError(
           "An account with this email already exists. Please check your email or try logging in."
         );
@@ -58,7 +60,7 @@ export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
 
       // Check if email confirmation is required
       if (data?.user && !data?.session) {
-        // Redirect to verification page instead of home
+        // Redirect to verification page
         router.push("/verify-email?email=" + encodeURIComponent(email));
         return;
       }

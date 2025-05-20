@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE /api/cart - Delete the current user's cart
 export async function DELETE(req: NextRequest) {
   try {
     const user = await getCurrentUser(req);

@@ -42,15 +42,11 @@ export default function Header() {
   const [isClient, setIsClient] = useState(false);
   const supabase = createClientComponentClient();
 
-  // Set isClient to true after component mounts to avoid hydration mismatch
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Calculate cart items count
   const cartItemsCount = Array.isArray(cart) ? cart.length : 0;
-
-  // Check if user is logged in
+  const { toggleCart } = useCart();
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -58,7 +54,6 @@ export default function Header() {
       } = await supabase.auth.getSession();
       setUser(session?.user || null);
 
-      // Set up auth state listener
       const {
         data: { subscription },
       } = await supabase.auth.onAuthStateChange((_event, session) => {
@@ -180,26 +175,23 @@ export default function Header() {
                 </AnimatePresence>
               </Button>
             )}
-
-            {/* Cart Button */}
-            <Link href="/cart" passHref>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full relative"
-                aria-label="View cart"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {cartItemsCount > 0 && (
-                  <Badge
-                    className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#c2152a] text-white text-xs"
-                    variant="destructive"
-                  >
-                    {cartItemsCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full relative"
+              aria-label="View cart"
+              onClick={toggleCart}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartItemsCount > 0 && (
+                <Badge
+                  className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center bg-[#c2152a] text-white text-xs"
+                  variant="destructive"
+                >
+                  {cartItemsCount}
+                </Badge>
+              )}
+            </Button>
 
             {isClient && (
               <>
@@ -254,7 +246,6 @@ export default function Header() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  // Logged out state
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
