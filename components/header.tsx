@@ -28,45 +28,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export default function Header() {
   const { setTheme, theme } = useTheme();
-  const { cart } = useCart();
+  const { cart, toggleCart } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [isClient, setIsClient] = useState(false);
-  const supabase = createClientComponentClient();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
   const cartItemsCount = Array.isArray(cart) ? cart.length : 0;
-  const { toggleCart } = useCart();
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+      const supabase = await createClient();
 
-      const {
-        data: { subscription },
-      } = await supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log(event, session);
+        if (event === "INITIAL_SESSION") {
+          // handle initial session
+        } else if (event === "SIGNED_IN") {
+          setUser(session!.user);
+        } else if (event === "SIGNED_OUT") {
+          setUser(null);
+        }
       });
-
-      return () => {
-        subscription.unsubscribe();
-      };
+      setUser(data.user || null);
     };
 
     getUser();
-  }, [supabase.auth]);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,26 +69,23 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle logout
   const handleLogout = async () => {
+    const supabase = await createClient();
+
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
   };
-
-  // Navigation items - Home and Products point to the same page
   const navItems = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
 
-  // Check if a path is active (special case for Home and Products)
   const isActive = (path: string) => {
     return pathname === path;
   };
 
-  // Handle auth navigation with URL parameters
   const navigateToAuth = (mode: string | null) => {
     if (mode === "login" || mode === null) {
       router.push("/login");
@@ -150,31 +140,29 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {isClient && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="rounded-full"
-                aria-label="Toggle theme"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={theme}
-                    initial={{ y: -20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 20, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="h-5 w-5" />
-                    ) : (
-                      <Moon className="h-5 w-5" />
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="rounded-full"
+              aria-label="Toggle theme"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={theme}
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 20, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -193,81 +181,78 @@ export default function Header() {
               )}
             </Button>
 
-            {isClient && (
-              <>
-                {user ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="rounded-full p-0"
-                        aria-label="User menu"
-                      >
-                        <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
-                          <AvatarImage
-                            src={
-                              user.user_metadata?.avatar_url ||
-                              "https://github.com/shadcn.png"
-                            }
-                            alt="@user"
-                          />
-                          <AvatarFallback className="bg-[#c2152a] text-white">
-                            {user.user_metadata?.full_name?.[0] ||
-                              user.email?.[0] ||
-                              "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel>
-                        {user.user_metadata?.full_name || user.email}
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => router.push("/profile")}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push("/orders")}>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        <span>Orders</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => router.push("/settings")}
-                      >
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <div className="flex items-center gap-2">
+            <>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="hidden sm:inline-flex"
-                      onClick={() => navigateToAuth("login")}
+                      className="rounded-full p-0"
+                      aria-label="User menu"
                     >
-                      Sign In
+                      <Avatar className="h-8 w-8 border-2 border-gray-200 dark:border-gray-700 hover:border-[#c2152a] transition-colors">
+                        <AvatarImage
+                          src={
+                            user.user_metadata?.avatar_url ||
+                            "https://github.com/shadcn.png"
+                          }
+                          alt="@user"
+                        />
+                        <AvatarFallback className="bg-[#c2152a] text-white">
+                          {user.user_metadata?.full_name?.[0] ||
+                            user.email?.[0] ||
+                            "U"}
+                        </AvatarFallback>
+                      </Avatar>
                     </Button>
-                    <Button
-                      className="bg-[#c2152a] hover:bg-[#a01020] text-white"
-                      size="sm"
-                      onClick={() => navigateToAuth("signup")}
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      {user.user_metadata?.full_name || user.email}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push("/profile")}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/orders")}>
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      <span>Orders</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/settings")}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden sm:inline-flex"
+                    onClick={() => navigateToAuth("login")}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    className="bg-[#c2152a] hover:bg-[#a01020] text-white"
+                    size="sm"
+                    onClick={() => navigateToAuth("signup")}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              )}
+            </>
 
             {/* Mobile Menu Button */}
+
             <Button
               variant="ghost"
               size="icon"
@@ -312,7 +297,7 @@ export default function Header() {
               ))}
 
               {/* Login/Signup buttons for mobile when logged out */}
-              {isClient && !user && (
+              {!user && (
                 <div className="pt-2 pb-1">
                   <div className="border-t border-gray-200 dark:border-gray-800 pt-2 flex flex-col gap-2">
                     <button

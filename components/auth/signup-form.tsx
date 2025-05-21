@@ -50,7 +50,6 @@ export default function SignUpForm({ onError, returnUrl }: SignUpFormProps) {
         return;
       }
 
-      // Check if user already exists but hasn't confirmed email
       if (data?.user?.identities?.length === 0) {
         onError(
           "An account with this email already exists. Please check your email or try logging in."
