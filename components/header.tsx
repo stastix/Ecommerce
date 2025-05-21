@@ -45,7 +45,7 @@ export default function Header() {
     const getUser = async () => {
       const supabase = await createClient();
 
-      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      supabase.auth.onAuthStateChange((event, session) => {
         console.log(event, session);
         if (event === "INITIAL_SESSION") {
           // handle initial session
@@ -55,7 +55,6 @@ export default function Header() {
           setUser(null);
         }
       });
-      setUser(data.user || null);
     };
 
     getUser();
