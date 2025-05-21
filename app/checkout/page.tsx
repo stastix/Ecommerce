@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
+import Image from "next/image";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function CheckoutPage() {
         <Button
           variant="ghost"
           className="mb-6 flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-          onClick={() => router.push("/products")}
+          onClick={() => router.push("/")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Products
@@ -56,7 +57,6 @@ export default function CheckoutPage() {
           animate="visible"
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
-          {/* Order Summary */}
           <motion.div variants={itemVariants} className="md:col-span-2">
             <Card>
               <CardHeader className="pb-3">
@@ -78,7 +78,14 @@ export default function CheckoutPage() {
                           className="flex justify-between items-center py-2"
                         >
                           <div className="flex items-center">
-                            <div className="w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-800 mr-4"></div>
+                            <div className="relative w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-800 mr-4">
+                              <Image
+                                src={item.image || "/placeholder.svg"}
+                                alt="Item image"
+                                fill
+                                className="object-cover rounded-md"
+                              />
+                            </div>
                             <div>
                               <p className="font-medium">{item.name}</p>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -130,7 +137,6 @@ export default function CheckoutPage() {
             </Card>
           </motion.div>
 
-          {/* Demo End Message */}
           <motion.div variants={itemVariants} className="md:col-span-1">
             <Card className="bg-primary/5 border-primary/20">
               <CardHeader className="pb-3">
@@ -198,7 +204,7 @@ export default function CheckoutPage() {
               Back to Home
             </Link>
             <Link
-              href="/products"
+              href="/"
               className="text-sm text-primary hover:underline flex items-center"
             >
               Continue Shopping

@@ -16,6 +16,8 @@ export default function AuthForm() {
   const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const returnUrl = searchParams.get("returnUrl");
+
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +28,7 @@ export default function AuthForm() {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        router.push("/");
+        router.push(returnUrl || "/");
         return;
       }
       if (urlMode === "signup" || urlMode === "forgot-password") {
@@ -36,7 +38,7 @@ export default function AuthForm() {
       }
     }
     fetchAuthMode();
-  }, [router, searchParams, supabase.auth]);
+  }, [returnUrl, router, searchParams, supabase.auth]);
 
   const handleModeChange = (newMode: AuthMode) => {
     setError(null);

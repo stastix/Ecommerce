@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import SocialLoginButtons from "./social-login-buttons";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 interface LoginFormProps {
   onError: (error: string) => void;
@@ -24,6 +25,8 @@ export default function LoginForm({ onError }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") || "/";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,7 +40,6 @@ export default function LoginForm({ onError }: LoginFormProps) {
 
       if (error) {
         if (error.message.includes("Email not confirmed")) {
-          // Handle unconfirmed email case
           onError(
             "Please check your email to confirm your account before logging in."
           );
@@ -52,11 +54,9 @@ export default function LoginForm({ onError }: LoginFormProps) {
         return;
       }
 
-      // Refresh the page to update the session
       router.refresh();
 
-      // Redirect to dashboard or home
-      router.push("/");
+      router.push(returnUrl);
     } catch (err) {
       onError("An unexpected error occurred");
       console.error(err);

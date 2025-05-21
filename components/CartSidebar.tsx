@@ -10,8 +10,6 @@ import {
   Plus,
   ShoppingBag,
 } from "lucide-react";
-// import { useRouter } from "next/navigation";
-
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -38,8 +36,6 @@ const CartSidebar = () => {
     };
   }, [isCartOpen]);
 
-  // const router = useRouter();
-
   const handlePlusClick = (productId: number) => {
     updateQuantity(productId, 1);
   };
@@ -47,11 +43,6 @@ const CartSidebar = () => {
   const handleMinusClick = (productId: number) => {
     updateQuantity(productId, -1);
   };
-
-  // const handleCheckoutClick = () => {
-  //   router.push("/checkout");
-  //   toggleCart();
-  // };
 
   return (
     <>
@@ -200,7 +191,12 @@ const CartSidebar = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeFromCart(product.productId)}
+                          onClick={() =>
+                            removeFromCart(
+                              product.productId,
+                              product.selectedSize
+                            )
+                          }
                           className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 self-start"
                           aria-label={`Remove ${product.name} from cart`}
                         >

@@ -26,7 +26,6 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // 🔒 Protected routes: redirect to /login if not authenticated
   const isProtected = ["/checkout", "/payment"].some((route) =>
     pathname.startsWith(route)
   );
@@ -34,6 +33,8 @@ export async function middleware(request: NextRequest) {
   if (!user && isProtected) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("returnUrl", "/checkout");
+
     return NextResponse.redirect(loginUrl);
   }
   const isAuthPage = ["/login", "/auth"].some((route) =>

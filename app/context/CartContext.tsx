@@ -5,7 +5,7 @@ import { createContext, useContext, useState, ReactNode, useMemo } from "react";
 type CartContextType = {
   cart: CartProduct[];
   addToCart: (product: Product, selectedSize: string | null) => void;
-  removeFromCart: (productId: number) => void;
+  removeFromCart: (productId: number, selectedSize: string | null) => void;
   totalAmount: number;
   isCartOpen: boolean;
   updateQuantity: (productId: number, quantity: number) => void;
@@ -26,7 +26,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (existingProduct) {
-        // If the product already exists, just increase its quantity
         return prevCart.map((item) =>
           item.productId === product.id && item.selectedSize === selectedSize
             ? { ...item, quantity: item.quantity + 1 }
@@ -41,16 +40,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           quantity: 1,
           selectedSize,
           category: "",
-          productId: 0,
+          productId: product.id,
         };
         return [...prevCart, newItem];
       }
     });
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: number, selectedSize: string | null) => {
     setCart((prevCart) =>
-      prevCart.filter((item) => item.productId !== productId)
+      prevCart.filter(
+        (item) =>
+          item.productId !== productId || item.selectedSize !== selectedSize
+      )
     );
   };
   const updateQuantity = (productId: number, quantity: number) => {

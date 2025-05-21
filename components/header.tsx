@@ -3,16 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Moon,
-  Sun,
-  ShoppingCart,
-  Menu,
-  X,
-  User,
-  LogOut,
-  Settings,
-} from "lucide-react";
+import { Moon, Sun, ShoppingCart, Menu, X, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -210,18 +201,6 @@ export default function Header() {
                       {user.user_metadata?.full_name || user.email}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push("/profile")}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/orders")}>
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      <span>Orders</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/settings")}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />

@@ -5,28 +5,14 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
 
 export default function CheckoutButton() {
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const { cart, toggleCart } = useCart();
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const supabase = await createClient();
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error) {
-        console.error("Error checking auth status:", error.message);
-        setUser(null);
-        return;
-      }
-
-      setUser(data.user);
-    };
+    const checkAuthStatus = async () => {};
 
     checkAuthStatus();
   }, []);
@@ -35,20 +21,10 @@ export default function CheckoutButton() {
     setIsLoading(true);
 
     try {
-      if (!user) {
-        localStorage.setItem("pendingCart", JSON.stringify(cart));
-
-        if (toggleCart) {
-          toggleCart();
-        }
-        router.push(`/login?returnUrl=${encodeURIComponent("/checkout")}`);
-        return;
-      }
-
+      router.push("/checkout");
       if (toggleCart) {
         toggleCart();
       }
-      router.push("/checkout");
     } catch (error) {
       console.error("Checkout error:", error);
     } finally {
