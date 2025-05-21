@@ -13,6 +13,7 @@ export interface Product {
 }
 
 export interface CartProduct {
+  id: number | null | undefined;
   productId: number;
   name: string;
   price: number;

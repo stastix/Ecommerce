@@ -15,7 +15,7 @@ import {
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { CheckoutButton } from "./checkout-button";
+import CheckoutButton from "./checkout-button";
 
 const CartSidebar = () => {
   const {
@@ -243,7 +243,7 @@ const CartSidebar = () => {
                 </span>
               </div>
               <div className="flex flex-col gap-2 mt-4">
-                <CheckoutButton cartProducts={cart} />
+                <CheckoutButton />
               </div>
               <Button
                 variant="outline"

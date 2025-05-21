@@ -1,60 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Loader2 } from "lucide-react";
-import { CartProduct } from "@/lib/db/schema";
+import { Loader2, ShoppingCart } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
-import { supabase } from "@/lib/db/queries";
+import { createClient } from "@/utils/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-interface CheckoutButtonProps {
-  cartProducts: CartProduct[];
-}
-
-export function CheckoutButton({ cartProducts }: CheckoutButtonProps) {
+export default function CheckoutButton() {
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-  const supabaseClient = useSupabaseClient();
-  const { toggleCart } = useCart();
+  const { cart, toggleCart } = useCart();
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("Error checking auth status:", error.message);
+        setUser(null);
+        return;
+      }
+
+      setUser(data.user);
+    };
+
+    checkAuthStatus();
+  }, []);
 
   const handleCheckout = async () => {
     setIsLoading(true);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       if (!user) {
-        localStorage.setItem(
-          "pendingCart",
-          JSON.stringify({ products: cartProducts })
-        );
+        localStorage.setItem("pendingCart", JSON.stringify(cart));
+
+        if (toggleCart) {
+          toggleCart();
+        }
         router.push(`/login?returnUrl=${encodeURIComponent("/checkout")}`);
-        toggleCart();
         return;
       }
-      const { data: session } = await supabaseClient.auth.getSession();
 
-      
-      const token = session?.session?.access_token;
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
-      const response = await fetch("/api/cart", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ products: cartProducts }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save cart");
+      if (toggleCart) {
+        toggleCart();
       }
       router.push("/checkout");
     } catch (error) {
@@ -66,8 +58,10 @@ export function CheckoutButton({ cartProducts }: CheckoutButtonProps) {
 
   return (
     <Button
+      variant="default"
+      className={`w-full mt-2 bg-[#c2152a] hover:bg-[#a01020] text-white `}
+      disabled={isLoading || cart.length === 0}
       onClick={handleCheckout}
-      disabled={isLoading || cartProducts.length === 0}
     >
       {isLoading ? (
         <>
@@ -75,7 +69,10 @@ export function CheckoutButton({ cartProducts }: CheckoutButtonProps) {
           Processing...
         </>
       ) : (
-        "Proceed to Checkout"
+        <>
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Proceed to Checkout
+        </>
       )}
     </Button>
   );

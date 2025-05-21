@@ -34,13 +34,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         );
       } else {
         const newItem: CartProduct = {
-          productId: product.id,
+          id: product.id,
           name: product.name,
           price: product.price,
           image: product.image,
           quantity: 1,
           selectedSize,
           category: "",
+          productId: 0,
         };
         return [...prevCart, newItem];
       }
