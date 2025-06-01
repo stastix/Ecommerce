@@ -30,7 +30,7 @@ This is a simple eCommerce web app demo that allows users to add products to the
 
 - **Database**:
   - Postgres (Supabase-managed database).
-  - Real-time sync for bookings and events.
+
 
 ## Getting Started
 
