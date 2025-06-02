@@ -2,15 +2,6 @@
 
 This is a simple eCommerce web app demo that allows users to add products to their cart. The app uses **Supabase** for user authentication and basic cart management. When a user adds a product to the cart, they are redirected to a login page (for demo purposes). The app also uses **ShadCN** for modern UI components.
 
-## Table of Contents
-
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
 
 
 ## Tech Stack
